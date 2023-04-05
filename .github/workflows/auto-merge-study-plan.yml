@@ -1,19 +1,24 @@
-name: Auto merge pull requests with label "study-plan" and non-main branch
-
+name: Auto Merge Study Plan
 on:
   pull_request:
-    types: -labeled
+    types: [opened, reopened]
 
 jobs:
-  automerge:
+  auto-merge:
     runs-on: ubuntu-latest
     steps:
-      - id: automerge
-        uses: "pascalgn/automerge-action@v0.15.6"
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          merge-method: merge
-          merge-labels: study-plan
-          delete-branch: false
-          pull-request-filter: >
-            head != 'main' && contains(github.event.pull_request.labels.*.name, 'study-plan')
+      - uses: actions/checkout@v3
+      - name: Auto Merge Study Plan
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const labels = context.payload.pull_request.labels
+            const hasStudyPlanLabel = labels.some(label => label.name === 'study-plan')
+            if (hasStudyPlanLabel) {
+              github.pulls.merge({
+                pull_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo
+              })
+            }
